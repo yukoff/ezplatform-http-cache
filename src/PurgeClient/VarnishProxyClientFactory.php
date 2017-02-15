@@ -10,6 +10,7 @@ namespace EzSystems\PlatformHttpCacheBundle\PurgeClient;
 
 use eZ\Bundle\EzPublishCoreBundle\DependencyInjection\Configuration\SiteAccessAware\DynamicSettingParserInterface;
 use eZ\Publish\Core\MVC\ConfigResolverInterface;
+use FOS\HttpCache\ProxyClient\HttpDispatcher;
 
 /**
  * Factory for Varnish proxy client.
@@ -46,31 +47,13 @@ class VarnishProxyClientFactory
     /**
      * Builds the proxy client, taking dynamically defined servers into account.
      *
-     * @param array $servers
-     * @param string $baseUrl
+     * @param HttpDispatcher $httpDispatcher
      *
      * @return \FOS\HttpCache\ProxyClient\Varnish
      */
-    public function buildProxyClient(array $servers, $baseUrl)
+    public function buildProxyClient(HttpDispatcher $httpDispatcher)
     {
-        $allServers = array();
-        foreach ($servers as $server) {
-            if (!$this->dynamicSettingParser->isDynamicSetting($server)) {
-                $allServers[] = $server;
-                continue;
-            }
-
-            $settings = $this->dynamicSettingParser->parseDynamicSetting($server);
-            $configuredServers = $this->configResolver->getParameter(
-                $settings['param'],
-                $settings['namespace'],
-                $settings['scope']
-            );
-            $allServers = array_merge($allServers, (array)$configuredServers);
-        }
-
         $class = $this->proxyClientClass;
-
-        return new $class($allServers, $baseUrl);
+        return new $class($httpDispatcher);
     }
 }
